@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+    <style>
+      html {
+        font-family: sans-serif;
+      }
+
+      label,
+      input {
+        font-size: 24px;
+      }
+
+      button {
+        padding: 8px 16px;
+        font-size: 24px;
+        margin-top: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Login</h1>
+
+    <div>
+      <input id="username" placeholder="Username" />
+    </div>
+
+    <button onclick="submit()">Submit</button>
+
+    <script>
+      const usernameInput = document.getElementById('username');
+
+      const parseCookies = () => {
+        return document.cookie.split(';').reduce((cookies, cookie) => {
+          const [name, value] = cookie.split('=').map((c) => c.trim());
+
+          return {
+            ...cookies,
+            [name]: value,
+          };
+        }, {});
+      };
+
+      async function submit() {
+        const username = usernameInput.value;
+
+        try {
+          const response = await fetch('/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username }),
+          });
+
+          const { authToken, user } = await response.json();
+
+          window.parent.postMessage(
+            {
+              type: 'AUTH_TOKEN',
+              authToken,
+              user,
+            },
+            '*',
+          );
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      const { authToken } = parseCookies(document.cookie);
+
+      (async () => {
+        if (authToken) {
+          try {
+            const response = await fetch('/verify', { method: 'POST' });
+            const user = await response.json();
+
+            window.parent.postMessage(
+              {
+                type: 'AUTH_TOKEN',
+                authToken,
+                user,
+              },
+              '*',
+            );
+          } catch {
+            window.parent.postMessage({ type: 'AUTH_SHOW' }, '*');
+          }
+        } else {
+          window.parent.postMessage({ type: 'AUTH_SHOW' }, '*');
+        }
+      })();
+    </script>
+  </body>
+</html>

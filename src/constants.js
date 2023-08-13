@@ -1,0 +1,7 @@
+const COOKIE_EXPIRATION_SEC = 150;
+const AUTH_SECRET = '123';
+
+module.exports = {
+  COOKIE_EXPIRATION_SEC,
+  AUTH_SECRET,
+};
